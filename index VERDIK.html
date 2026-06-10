@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verdik — Inteligência de risco para mesas proprietárias</title>
+<meta name="description" content="Copiloto de IA para prop firms: atende em segundos, aprova sem erro e vê a fraude antes do prejuízo. Conhece as regras da sua mesa de cor e nunca esquece um cliente.">
+<meta property="og:title" content="Verdik — Inteligência de risco para mesas proprietárias">
+<meta property="og:description" content="Atende em segundos. Aprova sem erro. Vê a fraude antes do prejuízo.">
+<meta name="theme-color" content="#F1ECE0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='27' fill='%230a2027'/%3E%3Ctext x='60' y='88' text-anchor='middle' font-family='Georgia,serif' font-weight='500' font-size='92' fill='%23ECE6D9'%3EV%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Schibsted+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F1ECE0; --paper2:#E9E2D1; --paper3:#E2DAC6;
+  --ink:#0b2026; --ink2:#3c4d51; --muted:#6c7b7d; --faint:#94a09f;
+  --line:rgba(11,32,38,.14); --line2:rgba(11,32,38,.24);
+  --brass:#9a7b3c; --brassb:#C9A86A; --teal:#157e8c; --tealb:#46bccc; --red:#c2473f;
+  /* screen (dark) */
+  --scr:#091d23; --scr2:#0d2730; --scr3:#143039;
+  --si:#ECE6D9; --si2:#c7c3b6; --smut:#7e9398; --sdim:#536469;
+  --sline:rgba(236,230,217,.12); --sline2:rgba(236,230,217,.22);
+  --steal:#4fc3d3; --samber:#e6a85c; --sred:#e8615a; --sbrass:#C9A86A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:"Schibsted Grotesk",system-ui,sans-serif;font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");mix-blend-mode:multiply;opacity:.04}
+.serif{font-family:"Fraunces",Georgia,serif;font-weight:400}
+.mono{font-family:"Spline Sans Mono",ui-monospace,monospace}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--ink);color:var(--paper)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 40px;position:relative;z-index:2}
+@media(max-width:680px){.wrap{padding:0 22px}}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.tag{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass)}
+
+/* nav */
+nav{position:sticky;top:0;z-index:60;background:rgba(241,236,224,.8);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:74px}
+.brand{display:flex;align-items:center;gap:13px}
+.brand .tile{width:31px;height:31px;border-radius:7px;background:linear-gradient(145deg,#143039,#091d23);display:grid;place-items:center;font-family:"Fraunces",serif;font-weight:500;font-size:22px;color:var(--si)}
+.brand .wm{font-family:"Fraunces",serif;font-weight:500;font-size:26px;letter-spacing:.13em;color:var(--ink)}
+.nav-r{display:flex;align-items:center;gap:30px}
+.nav-r a{font-size:14px;color:var(--muted)}
+.nav-r a:hover{color:var(--ink)}
+.btn{font-family:"Schibsted Grotesk";font-size:14px;font-weight:600;padding:12px 21px;border:1px solid var(--line2);background:transparent;color:var(--ink);cursor:pointer;transition:.18s;white-space:nowrap;border-radius:8px;display:inline-flex;align-items:center;gap:9px}
+.btn:hover{border-color:var(--ink)}
+.btn-go{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:700}
+.btn-go:hover{background:#0f2b33;transform:translateY(-1px);box-shadow:0 10px 26px rgba(11,32,38,.22)}
+@media(max-width:760px){.nav-r a:not(.btn){display:none}}
+
+/* hero */
+.hero{padding:84px 0 70px}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:60px;align-items:center}
+@media(max-width:960px){.hero-grid{grid-template-columns:1fr;gap:48px}}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);border:1px solid var(--line2);border-radius:100px;padding:7px 15px;margin-bottom:30px}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.hero h1{font-family:"Fraunces",serif;font-weight:400;font-size:clamp(40px,5.4vw,72px);line-height:1.0;letter-spacing:-.025em;color:var(--ink)}
+.hero h1 .i{font-style:italic;color:var(--brass)}
+.hero .lead{font-size:19px;color:var(--ink2);max-width:46ch;margin-top:26px;line-height:1.62}
+.hero .cta{display:flex;gap:13px;margin-top:34px;flex-wrap:wrap}
+.hero .cta .btn{padding:14px 24px;font-size:15px}
+.trustline{display:flex;gap:24px;flex-wrap:wrap;margin-top:32px;font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--muted)}
+.trustline span{display:flex;align-items:center;gap:7px}
+.trustline svg{width:14px;height:14px;color:var(--teal)}
+
+/* SCREEN (dark product) */
+.screen{background:var(--scr);border-radius:14px;overflow:hidden;border:1px solid rgba(0,0,0,.25);box-shadow:0 40px 90px rgba(11,32,38,.28),0 6px 18px rgba(11,32,38,.14)}
+.scr-bar{display:flex;align-items:center;gap:7px;padding:13px 17px;border-bottom:1px solid var(--sline);background:rgba(0,0,0,.2)}
+.scr-bar i{width:10px;height:10px;border-radius:50%;background:var(--sline2)}
+.scr-bar .ti{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--smut);margin-left:9px}
+.scr-bar .live{margin-left:auto;font-family:"Spline Sans Mono",monospace;font-size:10px;color:var(--steal);display:flex;align-items:center;gap:6px}
+.scr-bar .live b{width:6px;height:6px;border-radius:50%;background:var(--steal);box-shadow:0 0 8px var(--steal);animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* hero screen content */
+.hwin{padding:18px;color:var(--si)}
+.alert{display:flex;align-items:center;gap:12px;background:rgba(232,97,90,.13);border:1px solid rgba(232,97,90,.4);border-radius:10px;padding:13px 15px;margin-bottom:15px}
+.alert .ai{width:34px;height:34px;border-radius:8px;background:rgba(232,97,90,.2);display:grid;place-items:center;color:var(--sred);flex:none;animation:pr 1.8s infinite}
+@keyframes pr{0%,100%{box-shadow:0 0 0 0 rgba(232,97,90,.4)}50%{box-shadow:0 0 0 7px rgba(232,97,90,0)}}
+.alert .at{font-weight:700;font-size:14px;color:#f0908a}
+.alert .as{font-family:"Spline Sans Mono",monospace;font-size:11px;color:#d98f8a;margin-top:2px}
+.bub{border-radius:11px;padding:13px 15px;margin-bottom:11px;font-size:14px;line-height:1.5}
+.bub.t{background:var(--scr3);border:1px solid var(--sline);color:var(--si2)}
+.bub.t .who{font-family:"Spline Sans Mono",monospace;font-size:10px;color:var(--sdim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.bub.v{background:rgba(79,195,211,.08);border:1px solid rgba(79,195,211,.28)}
+.bub.v .who{font-family:"Spline Sans Mono",monospace;font-size:10px;color:var(--steal);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.bub.v .who b{width:14px;height:14px;border-radius:4px;background:var(--steal);color:var(--scr);display:grid;place-items:center;font-family:Fraunces,serif;font-size:10px}
+.bub.v p{color:var(--si)}
+.scan{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--steal);display:flex;align-items:center;gap:8px;padding:3px 2px}
+.scan i{width:6px;height:6px;border-radius:50%;background:var(--steal);animation:blink 1.2s infinite}
+
+/* stats */
+.stats{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:56px}
+.stats-in{display:grid;grid-template-columns:repeat(4,1fr)}
+.stat{padding:30px 28px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat .v{font-family:"Fraunces",serif;font-size:44px;line-height:1;color:var(--ink);display:flex;align-items:baseline}
+.stat .v .u{font-size:22px;color:var(--brass);margin-left:1px}
+.stat .l{font-size:13.5px;color:var(--muted);margin-top:11px}
+@media(max-width:760px){.stats-in{grid-template-columns:1fr 1fr}.stat:nth-child(2){border-right:0}.stat{border-bottom:1px solid var(--line)}}
+
+section{position:relative;z-index:2}
+.sec-pad{padding:96px 0}
+.sec-head{max-width:760px;margin-bottom:8px}
+.sec-head .tag{display:block;margin-bottom:16px}
+.sec-head h2{font-family:"Fraunces",serif;font-weight:400;font-size:clamp(31px,4.3vw,52px);line-height:1.03;letter-spacing:-.022em;color:var(--ink)}
+.sec-head h2 .i{font-style:italic;color:var(--brass)}
+.sec-head .sub{color:var(--ink2);font-size:18.5px;margin-top:18px;line-height:1.6}
+.lbl{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.lbl::before{content:"";width:26px;height:1px;background:var(--brass)}
+
+/* problem cards */
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:50px}
+@media(max-width:860px){.cards3{grid-template-columns:1fr}}
+.card{background:var(--paper2);border:1px solid var(--line);border-radius:16px;padding:30px;transition:.22s}
+.card:hover{transform:translateY(-4px);box-shadow:0 22px 50px rgba(11,32,38,.12);border-color:var(--line2)}
+.card .ic{width:48px;height:48px;border-radius:12px;background:var(--paper);border:1px solid var(--line2);display:grid;place-items:center;color:var(--ink);margin-bottom:20px}
+.card .ic.r{color:var(--red)} .card .ic.b{color:var(--brass)}
+.card .ic svg{width:24px;height:24px}
+.card h3{font-family:"Fraunces",serif;font-weight:400;font-size:23px;margin-bottom:10px}
+.card p{color:var(--ink2);font-size:15px}
+.card .kpi{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--brass);margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+
+/* split feature (screen + text) */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:54px;align-items:center;margin-top:46px}
+.split.rev{direction:rtl}.split.rev>*{direction:ltr}
+@media(max-width:900px){.split{grid-template-columns:1fr;gap:32px;direction:ltr}}
+.split .txt h3{font-family:"Fraunces",serif;font-weight:400;font-size:clamp(26px,3.2vw,36px);line-height:1.08;letter-spacing:-.02em}
+.split .txt p{color:var(--ink2);font-size:17px;margin-top:16px;line-height:1.62}
+.split .txt ul{list-style:none;margin-top:22px}
+.split .txt li{display:flex;gap:12px;align-items:flex-start;padding:9px 0;font-size:15.5px;color:var(--ink2)}
+.split .txt li svg{width:18px;height:18px;color:var(--teal);flex:none;margin-top:3px}
+
+/* console interaction */
+.console-body{display:grid;grid-template-columns:290px 1fr}
+@media(max-width:560px){.console-body{grid-template-columns:1fr}}
+.queue{border-right:1px solid var(--sline)}
+@media(max-width:560px){.queue{border-right:0;border-bottom:1px solid var(--sline)}}
+.queue-h{padding:14px 18px;border-bottom:1px solid var(--sline);display:flex;justify-content:space-between;align-items:center}
+.queue-h .t{font-family:"Spline Sans Mono",monospace;font-size:10.5px;color:var(--smut);letter-spacing:.1em;text-transform:uppercase}
+.queue-h .n{font-family:"Spline Sans Mono",monospace;font-size:10.5px;color:var(--sdim)}
+.acct{padding:15px 18px;border-bottom:1px solid var(--sline);cursor:pointer;transition:.14s;display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--si)}
+.acct:last-child{border-bottom:0}
+.acct:hover{background:var(--scr3)}
+.acct.active{background:var(--scr3);box-shadow:inset 3px 0 0 var(--steal)}
+.acct .who{font-weight:600;font-size:14px}
+.acct .meta{font-family:"Spline Sans Mono",monospace;font-size:10.5px;color:var(--smut);margin-top:4px}
+.plat{font-size:8.5px;color:var(--sdim);border:1px solid var(--sline2);border-radius:4px;padding:2px 5px;margin-left:6px;letter-spacing:.05em}
+.chip{font-family:"Spline Sans Mono",monospace;font-size:9.5px;font-weight:500;letter-spacing:.04em;padding:5px 8px;border-radius:6px;white-space:nowrap}
+.chip.ok{color:var(--steal);border:1px solid rgba(79,195,211,.4)} .chip.rev{color:var(--samber);border:1px solid rgba(230,168,92,.4)}
+.panel{padding:26px 28px;min-height:410px;color:var(--si)}
+.empty{color:var(--sdim);font-family:"Spline Sans Mono",monospace;font-size:12px;display:grid;place-items:center;height:358px;text-align:center;line-height:2.2}
+.ph{display:flex;justify-content:space-between;border-bottom:1px solid var(--sline);padding-bottom:16px}
+.ph h3{font-family:"Fraunces",serif;font-size:24px}
+.ph .sub2{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--smut);margin-top:6px}
+.verdict{display:flex;align-items:center;gap:13px;padding:18px 0 6px}
+.verdict .icon{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;font-weight:700}
+.verdict.ok .icon{color:var(--scr);background:var(--steal);box-shadow:0 0 26px rgba(79,195,211,.5)} .verdict.rev .icon{color:var(--scr);background:var(--samber)}
+.verdict .big{font-family:"Fraunces",serif;font-size:28px;font-style:italic}
+.verdict.ok .big{color:var(--steal)} .verdict.rev .big{color:var(--samber)}
+.tagh{font-family:"Spline Sans Mono",monospace;font-size:10px;color:var(--sdim);letter-spacing:.12em;text-transform:uppercase;margin:16px 0 4px}
+.check{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--sline);align-items:baseline}
+.check:last-child{border-bottom:0}
+.check .mk{font-family:"Spline Sans Mono",monospace;font-size:13px;width:14px;flex:none}
+.mk.y{color:var(--steal)} .mk.n{color:var(--samber)} .mk.h{color:var(--sdim)}
+.check .nm{font-weight:600;font-size:13.5px;min-width:132px}
+.check .dt{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--smut)}
+.pa{display:flex;gap:10px;margin-top:22px}
+.pa .sbtn{font-family:"Schibsted Grotesk";font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:8px;cursor:pointer;border:1px solid var(--sline2);background:transparent;color:var(--si)}
+.pa .sbtn.go{background:var(--steal);color:var(--scr);border:0;font-weight:700}
+.scanning{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;color:var(--smut);font-family:"Spline Sans Mono",monospace;font-size:12px;height:358px}
+.scanbar{width:150px;height:3px;background:var(--scr3);border-radius:2px;overflow:hidden;position:relative}
+.scanbar i{position:absolute;inset:0;width:38%;background:var(--steal);border-radius:2px;animation:scan 1s infinite;box-shadow:0 0 12px var(--steal)}
+@keyframes scan{0%{left:-38%}100%{left:100%}}
+
+/* risk inside screen */
+.risk-body{display:grid;grid-template-columns:300px 1fr}
+@media(max-width:620px){.risk-body{grid-template-columns:1fr}}
+.rlist{border-right:1px solid var(--sline)}
+@media(max-width:620px){.rlist{border-right:0;border-bottom:1px solid var(--sline)}}
+.rclient{display:flex;align-items:center;gap:13px;padding:16px 18px;border-bottom:1px solid var(--sline);cursor:pointer;transition:.15s;color:var(--si)}
+.rclient:last-child{border-bottom:0}
+.rclient:hover{background:var(--scr3)}
+.rclient.active{background:var(--scr3);box-shadow:inset 3px 0 0 var(--sbrass)}
+.rdot{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-family:"Spline Sans Mono",monospace;font-size:13px;flex:none}
+.rclient .nm{font-weight:600;font-size:14.5px}
+.rclient .id{font-family:"Spline Sans Mono",monospace;font-size:10px;color:var(--smut);margin-top:2px}
+.rpanel{padding:28px 30px;min-height:330px;color:var(--si)}
+.galert{display:flex;align-items:center;gap:12px;background:rgba(232,97,90,.13);border:1px solid rgba(232,97,90,.45);border-radius:11px;padding:13px 15px;margin-bottom:20px}
+.galert .gi{width:36px;height:36px;border-radius:9px;background:rgba(232,97,90,.2);display:grid;place-items:center;color:var(--sred);flex:none;animation:pr 1.6s infinite}
+.galert .gt{font-weight:700;color:#f0908a;font-size:14.5px}
+.galert .gs{font-family:"Spline Sans Mono",monospace;font-size:10.5px;color:#d98f8a;margin-top:2px}
+.rtop{display:grid;grid-template-columns:190px 1fr;gap:24px;align-items:center}
+@media(max-width:480px){.rtop{grid-template-columns:1fr}}
+.gauge text.gnum{font-family:"Fraunces",serif;font-size:44px;font-weight:500}
+.gauge text.glab{font-family:"Spline Sans Mono",monospace;font-size:8px;letter-spacing:.12em;fill:var(--smut)}
+.rmeta .rname{font-family:"Fraunces",serif;font-size:24px}
+.rmeta .rlevel{font-family:"Spline Sans Mono",monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;margin-top:6px}
+.rflags{margin-top:20px;border-top:1px solid var(--sline);padding-top:6px}
+.rflag{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--sline);font-size:14px}
+.rflag:last-child{border-bottom:0}
+.rflag .fi{width:18px;height:18px;flex:none;display:grid;place-items:center;border-radius:5px;font-family:"Spline Sans Mono",monospace;font-size:11px}
+.fi.ok{background:rgba(79,195,211,.15);color:var(--steal)} .fi.warn{background:rgba(230,168,92,.15);color:var(--samber)} .fi.bad{background:rgba(232,97,90,.15);color:var(--sred)}
+
+/* support inside screen */
+.sup-body{display:grid;grid-template-columns:300px 1fr}
+@media(max-width:620px){.sup-body{grid-template-columns:1fr}}
+.sup-pick{border-right:1px solid var(--sline)}
+@media(max-width:620px){.sup-pick{border-right:0;border-bottom:1px solid var(--sline)}}
+.ticket{padding:17px 18px;border-bottom:1px solid var(--sline);cursor:pointer;transition:.15s;color:var(--si)}
+.ticket:last-child{border-bottom:0}
+.ticket:hover{background:var(--scr3)}
+.ticket.active{background:var(--scr3);box-shadow:inset 3px 0 0 var(--sbrass)}
+.ticket .q{font-size:14.5px;font-weight:600}
+.ticket .src{font-family:"Spline Sans Mono",monospace;font-size:10px;color:var(--sdim);margin-top:6px}
+.sup-out{padding:26px 28px;min-height:300px;color:var(--si)}
+.diag{border-left:2px solid var(--steal);padding-left:15px}
+.diag .h{font-family:"Spline Sans Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--steal);margin-bottom:8px}
+.diag p{font-size:14.5px}
+.tags{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}
+.tg{font-family:"Spline Sans Mono",monospace;font-size:9.5px;padding:5px 9px;border-radius:6px;border:1px solid var(--sline2);color:var(--smut)}
+.tg.go{color:var(--steal);border-color:rgba(79,195,211,.4)} .tg.rev{color:var(--samber);border-color:rgba(230,168,92,.4)}
+.wpp{background:rgba(0,0,0,.22);border-left:2px solid var(--sbrass);border-radius:0 10px 10px 0;padding:15px 17px}
+.wpp .h{font-family:"Spline Sans Mono",monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--sbrass);margin-bottom:8px}
+.wpp p{font-size:14.5px;line-height:1.55;color:var(--si)}
+
+/* antes/depois */
+.ad{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:50px}
+@media(max-width:760px){.ad{grid-template-columns:1fr}}
+.adcol{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--paper2)}
+.adcol.dp{border-color:var(--ink);background:var(--paper);box-shadow:0 18px 44px rgba(11,32,38,.1)}
+.adcol .h{padding:18px 24px;font-family:"Spline Sans Mono",monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--line)}
+.adcol.an .h{color:var(--muted)} .adcol.dp .h{color:var(--teal)}
+.adrow{padding:16px 24px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start;font-size:14.5px}
+.adrow:last-child{border-bottom:0}
+.adcol.an .adrow{color:var(--muted)} .adcol.dp .adrow{color:var(--ink)}
+.adrow .m{flex:none;font-family:"Spline Sans Mono",monospace;font-size:13px;margin-top:1px}
+.adcol.an .m{color:var(--faint)} .adcol.dp .m{color:var(--teal)}
+
+/* DARK manifesto band */
+.band{background:var(--scr);color:var(--si);border-radius:24px;padding:64px 56px;position:relative;overflow:hidden}
+@media(max-width:680px){.band{padding:42px 26px}}
+.band .ghost{position:absolute;right:-50px;bottom:-130px;font-family:"Fraunces",serif;font-weight:500;font-size:420px;line-height:.7;color:var(--sbrass);opacity:.05}
+.band .tag{color:var(--sbrass)}
+.band h2{font-family:"Fraunces",serif;font-weight:400;font-size:clamp(28px,4vw,46px);line-height:1.05;letter-spacing:-.02em;max-width:20ch;margin-top:16px;color:var(--si)}
+.band h2 .i{font-style:italic;color:var(--sbrass)}
+.whygrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:50px;background:var(--sline);border:1px solid var(--sline);border-radius:14px;overflow:hidden;position:relative}
+@media(max-width:820px){.whygrid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.whygrid{grid-template-columns:1fr}}
+.why{background:var(--scr);padding:26px 24px}
+.why .n{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--sbrass);letter-spacing:.1em;margin-bottom:14px}
+.why h3{font-family:"Fraunces",serif;font-weight:500;font-size:19px;margin-bottom:8px;color:var(--si)}
+.why p{font-size:14px;color:var(--si2);line-height:1.55}
+
+/* how connects diagram */
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:18px;align-items:center;margin-top:50px}
+@media(max-width:760px){.flow{grid-template-columns:1fr;gap:14px}.flow .arr{transform:rotate(90deg);justify-self:center}}
+.node{border:1px solid var(--line2);border-radius:14px;padding:26px;text-align:center;background:var(--paper2)}
+.node.mid{background:var(--scr);color:var(--si);border-color:var(--ink);box-shadow:0 20px 50px rgba(11,32,38,.18)}
+.node .ni{width:44px;height:44px;border-radius:11px;margin:0 auto 14px;display:grid;place-items:center;background:var(--paper);border:1px solid var(--line2);color:var(--ink)}
+.node.mid .ni{background:var(--scr3);border-color:var(--sline2);color:var(--sbrass)}
+.node h4{font-family:"Fraunces",serif;font-weight:500;font-size:18px;margin-bottom:6px}
+.node p{font-size:13px;color:var(--muted)}
+.node.mid p{color:var(--si2)}
+.arr{color:var(--brass);font-family:"Spline Sans Mono",monospace;font-size:20px}
+.flow-note{text-align:center;font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--muted);margin-top:24px}
+
+/* modules */
+.mods{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:50px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+@media(max-width:820px){.mods{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.mods{grid-template-columns:1fr}}
+.mod{background:var(--paper);padding:26px 26px;transition:.18s}
+.mod:hover{background:var(--paper2)}
+.mod .top{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+.mod .ck{width:22px;height:22px;border-radius:50%;background:var(--ink);display:grid;place-items:center;color:var(--paper);flex:none}
+.mod .ck svg{width:12px;height:12px}
+.mod h3{font-family:"Fraunces",serif;font-weight:400;font-size:19px}
+.mod p{color:var(--muted);font-size:14px;padding-left:33px}
+
+/* CTA dark */
+.cta-band{background:var(--scr);border-radius:24px;overflow:hidden;display:grid;grid-template-columns:1fr 430px;position:relative}
+@media(max-width:900px){.cta-band{grid-template-columns:1fr}}
+.cta-band::before{content:"";position:absolute;width:420px;height:420px;border-radius:50%;background:var(--steal);filter:blur(160px);opacity:.14;top:-160px;left:-80px}
+.cta-l{padding:58px;position:relative;color:var(--si)}
+@media(max-width:680px){.cta-l{padding:38px 26px}}
+.cta-l .tag{color:var(--sbrass);display:block;margin-bottom:16px}
+.cta-l h2{font-family:"Fraunces",serif;font-weight:400;font-size:clamp(28px,3.6vw,42px);line-height:1.05;letter-spacing:-.02em;max-width:16ch;color:var(--si)}
+.cta-l .q{font-family:"Fraunces",serif;font-style:italic;font-size:18px;color:var(--si2);margin-top:22px;max-width:42ch;line-height:1.5}
+.cta-r{padding:58px;border-left:1px solid var(--sline);position:relative;background:rgba(0,0,0,.18)}
+@media(max-width:900px){.cta-r{border-left:0;border-top:1px solid var(--sline)}}
+@media(max-width:680px){.cta-r{padding:38px 26px}}
+.form label{display:block;font-family:"Spline Sans Mono",monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--smut);margin:16px 0 7px}
+.form input{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--sline2);border-radius:9px;padding:13px 14px;color:var(--si);font-family:"Schibsted Grotesk";font-size:15px}
+.form input:focus{outline:none;border-color:var(--steal)}
+.form .gobtn{width:100%;margin-top:24px;padding:15px;border:0;border-radius:9px;background:var(--steal);color:var(--scr);font-family:"Schibsted Grotesk";font-weight:700;font-size:15px;cursor:pointer;transition:.18s}
+.form .gobtn:hover{filter:brightness(1.08)}
+.thanks{display:none;padding:30px 0;text-align:center;color:var(--si)}
+.thanks .big{font-family:"Fraunces",serif;font-style:italic;font-size:28px;color:var(--steal)}
+.thanks p{color:var(--smut);margin-top:8px;font-size:15px}
+
+footer{padding:58px 0 42px;position:relative;z-index:2;border-top:1px solid var(--line);margin-top:96px}
+.foot{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px}
+.foot .claim{font-family:"Fraunces",serif;font-style:italic;font-size:22px;color:var(--ink2);max-width:24ch;line-height:1.34;text-align:right}
+@media(max-width:680px){.foot .claim{text-align:left}}
+.foot-bot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:34px;padding-top:24px;border-top:1px solid var(--line)}
+.foot-bot .mono{font-size:11.5px;color:var(--faint)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <a href="#" class="brand"><span class="tile">V</span><span class="wm">VERDIK</span></a>
+    <div class="nav-r">
+      <a href="#aprovacao">Aprovação</a>
+      <a href="#risco">Risco</a>
+      <a href="#suporte">Suporte</a>
+      <a href="#acesso" class="btn btn-go">Agendar demo</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="reveal in">
+      <span class="eyebrow"><span class="dot"></span>Copiloto de suporte e risco para prop firms</span>
+      <h1>Atende em segundos.<br>Aprova sem erro.<br><span class="i">Vê a fraude</span> antes do prejuízo.</h1>
+      <p class="lead">A Verdik é um analista que trabalha 24 horas, conhece as regras da sua mesa de cor e nunca esquece o histórico de um cliente — conectado direto ao sistema que você já usa.</p>
+      <div class="cta">
+        <a href="#acesso" class="btn btn-go">Agendar demonstração →</a>
+        <a href="#aprovacao" class="btn">Ver funcionando ↓</a>
+      </div>
+      <div class="trustline">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Sem trocar de sistema</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Com as suas regras</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Em produção hoje</span>
+      </div>
+    </div>
+    <div class="reveal in">
+      <div class="screen">
+        <div class="scr-bar"><i></i><i></i><i></i><span class="ti">verdik · atendimento</span><span class="live"><b></b>ao vivo</span></div>
+        <div class="hwin">
+          <div class="alert"><div class="ai"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div><div><div class="at">Cliente marcado · score 92</div><div class="as">padrão compra-e-contesta · 3 contas / mesmo CPF</div></div></div>
+          <div class="bub t"><div class="who">Trader · WhatsApp</div>Reprovei e não concordo, importei meu arquivo do MT5 certinho</div>
+          <div class="bub v"><div class="who"><b>V</b>Verdik · diagnóstico</div><p>Operações com data anterior ao início do teste — avaliadas fora da janela. É o bug de importação do MT5, não falha do trader. Resposta pronta gerada.</p></div>
+          <div class="scan"><i></i>consultando dados reais da conta #9305…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap"><div class="stats reveal"><div class="stats-in">
+    <div class="stat"><div class="v"><span class="u">&lt;</span><span class="count" data-to="2">2</span><span class="u">s</span></div><div class="l">do relato ao veredito</div></div>
+    <div class="stat"><div class="v"><span class="count" data-to="7">7</span></div><div class="l">critérios checados sozinho</div></div>
+    <div class="stat"><div class="v"><span class="count" data-to="100">100</span><span class="u">%</span></div><div class="l">com as regras da sua mesa</div></div>
+    <div class="stat"><div class="v">0–<span class="count" data-to="100">100</span></div><div class="l">score de risco por cliente</div></div>
+  </div></div></div>
+</header>
+
+<!-- PROBLEMA -->
+<section>
+  <div class="wrap sec-pad">
+    <div class="sec-head reveal">
+      <span class="tag">O problema que toda prop firm conhece</span>
+      <h2>Quando a mesa cresce, três coisas <span class="i">começam a vazar dinheiro.</span></h2>
+      <p class="sub">Em horas de equipe queimadas, em conta liberada errada e em chargeback. A Verdik ataca as três de uma vez.</p>
+    </div>
+    <div class="cards3">
+      <div class="card reveal">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/></svg></div>
+        <h3>O suporte não escala</h3>
+        <p>"Por que reprovei?", "bati a meta, e agora?". Cada dúvida exige abrir o painel, conferir o status e cruzar as regras na mão. Multiplique por centenas de traders: o suporte vira o teto do crescimento.</p>
+        <div class="kpi">// minutos por atendimento, o dia todo</div>
+      </div>
+      <div class="card reveal">
+        <div class="ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+        <h3>Aprovar é manual e arriscado</h3>
+        <p>Bateu a meta? Respeitou o drawdown? Operou os dias mínimos? Não fez swing proibido? Conferir tudo na mão é lento e sujeito a erro — e uma conta aprovada errada é prejuízo direto e precedente perigoso.</p>
+        <div class="kpi">// 5 a 8 critérios, conta por conta</div>
+      </div>
+      <div class="card reveal">
+        <div class="ic r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 9v4m0 3h.01"/></svg></div>
+        <h3>A fraude passa batido</h3>
+        <p>O que compra "por engano" e pede estorno. O que perde e abre disputa no banco. O que cria várias contas pra burlar regra. Hoje, esses padrões só aparecem quando o prejuízo já aconteceu.</p>
+        <div class="kpi">// ninguém lembra de milhares de clientes</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APROVAÇÃO -->
+<section id="aprovacao">
+  <div class="wrap sec-pad">
+    <div class="lbl reveal">Pré-check de aprovação</div>
+    <div class="split reveal">
+      <div class="screen">
+        <div class="scr-bar"><i></i><i></i><i></i><span class="ti">verdik · fila-de-aprovacao</span><span class="live"><b></b>demo</span></div>
+        <div class="console-body">
+          <div class="queue">
+            <div class="queue-h"><span class="t">Fila</span><span class="n" id="queueCount"></span></div>
+            <div id="queueList"></div>
+          </div>
+          <div class="panel">
+            <div class="empty" id="panelEmpty">selecione uma conta<br>—<br>veredito aqui</div>
+            <div id="panelBody" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+      <div class="txt">
+        <h3>A fila inteira, com veredito automático.</h3>
+        <p>Para cada conta que bate a meta, a Verdik roda sozinha todos os critérios da sua mesa e dá um veredito visual: verde para "segura pra aprovar", amarelo para "precisa revisar". A equipe deixa de conferir tudo na mão e passa a só validar.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Mostra o número de cada critério — a equipe confia porque vê a fonte.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>O que é julgamento humano (consistência) fica sinalizado — ela não decide onde não deve.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Aprovação real ali mesmo, com dupla confirmação e PIN.</li>
+        </ul>
+        <p style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;color:var(--muted);margin-top:22px">Clique numa conta da fila ao lado →</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RISCO -->
+<section id="risco">
+  <div class="wrap sec-pad" style="padding-top:0">
+    <div class="lbl reveal">Risco de operador · o diferencial</div>
+    <div class="split rev reveal">
+      <div class="screen">
+        <div class="scr-bar"><i></i><i></i><i></i><span class="ti">verdik · perfil-de-risco</span><span class="live"><b></b>demo</span></div>
+        <div class="risk-body">
+          <div class="rlist" id="riskList"></div>
+          <div class="rpanel" id="riskPanel"></div>
+        </div>
+      </div>
+      <div class="txt">
+        <h3>A peça que nenhuma planilha entrega.</h3>
+        <p>A Verdik monta um score de risco de cada <em>operador</em> — e enxerga o que a conta isolada esconde. Pelos próprios dados, liga contas do mesmo dono por CPF, telefone, endereço e pix (o laranja que abre conta atrás de conta), reconhece operação em espelho entre contas (copy-trading) e lê a conduta: reembolso, estorno, chargeback e o clássico comprar-e-contestar.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Score de operador de 0 a 100 — explicável, com cada fator na fonte.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>A conta limpa que pertence a um dono marcado acende junto — identidade, conduta e conluio num perfil só.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Quando um operador de risco aparece, o alerta vermelho surge no topo do atendimento — antes de qualquer decisão.</li>
+        </ul>
+        <p style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;color:var(--muted);margin-top:22px">← Clique num cliente pra ver o perfil</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SUPORTE -->
+<section id="suporte">
+  <div class="wrap sec-pad" style="padding-top:0">
+    <div class="lbl reveal">Atendimento com IA</div>
+    <div class="split reveal">
+      <div class="screen">
+        <div class="scr-bar"><i></i><i></i><i></i><span class="ti">verdik · atendimento</span><span class="live"><b></b>demo</span></div>
+        <div class="sup-body">
+          <div class="sup-pick" id="supPick"></div>
+          <div class="sup-out" id="supOut"></div>
+        </div>
+      </div>
+      <div class="txt">
+        <h3>O ticket, resolvido antes de chegar em você.</h3>
+        <p>A atendente cola o relato do trader — e até um print da tela. A Verdik consulta os dados reais da conta, identifica o que aconteceu e devolve um diagnóstico claro, a resposta pronta pra mandar no WhatsApp e os próximos passos pra equipe. O que tomava minutos vira segundos.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Lê texto e imagem — basta colar o print.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Separa o que resolve no chat do que precisa escalar pro técnico.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Mesma qualidade de resposta, independente de quem atende.</li>
+        </ul>
+        <p style="font-family:'Spline Sans Mono',monospace;font-size:12.5px;color:var(--muted);margin-top:22px">Clique num relato ao lado →</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANTES E DEPOIS -->
+<section>
+  <div class="wrap sec-pad" style="padding-top:0">
+    <div class="sec-head reveal">
+      <span class="tag">Antes e depois, na prática</span>
+      <h2>Os fluxos mais caros da mesa, <span class="i">com e sem a Verdik.</span></h2>
+    </div>
+    <div class="ad">
+      <div class="adcol an reveal">
+        <div class="h">Sem a Verdik</div>
+        <div class="adrow"><span class="m">—</span>Abrir painel, conferir status, cruzar regras e escrever resposta. Minutos por atendimento.</div>
+        <div class="adrow"><span class="m">—</span>Conferir 5 a 8 critérios na mão, conta por conta.</div>
+        <div class="adrow"><span class="m">—</span>Risco depende da memória de quem atende. Quase sempre só se vê o prejuízo depois.</div>
+        <div class="adrow"><span class="m">—</span>Detectar fraude em escala: praticamente impossível.</div>
+        <div class="adrow"><span class="m">—</span>Treinar atendente nova: semanas decorando as regras do produto.</div>
+      </div>
+      <div class="adcol dp reveal">
+        <div class="h">Com a Verdik</div>
+        <div class="adrow"><span class="m">✓</span>Cola o relato ou o print. Diagnóstico + resposta pronta em segundos.</div>
+        <div class="adrow"><span class="m">✓</span>Veredito automático verde/amarelo. A equipe só valida.</div>
+        <div class="adrow"><span class="m">✓</span>Score de risco automático + alerta no topo, antes de decidir.</div>
+        <div class="adrow"><span class="m">✓</span>Detecção de "compra e contesta", estornos repetidos e chargebacks.</div>
+        <div class="adrow"><span class="m">✓</span>A Verdik já sabe as regras. A atendente confia no veredito desde o dia um.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BAND -->
+<section>
+  <div class="wrap sec-pad" style="padding-top:0">
+    <div class="band reveal">
+      <div class="ghost">V</div>
+      <span class="tag">Por que isso otimiza de forma absurda</span>
+      <h2>A mesma equipe atende muito mais traders — <span class="i">e a base cresce sem a folha crescer junto.</span></h2>
+      <div class="whygrid">
+        <div class="why"><div class="n">— 01</div><h3>Escala sem inchar a folha</h3><p>O trabalho de "analisar" vira "validar", e validar é muito mais rápido. Uma atendente passa a fazer o de várias, sem perder qualidade.</p></div>
+        <div class="why"><div class="n">— 02</div><h3>Consistência de critério</h3><p>Toda atendente responde com o mesmo padrão, porque a análise vem da mesma fonte. Acaba o "depende de quem pegou".</p></div>
+        <div class="why"><div class="n">— 03</div><h3>Dinheiro que para de vazar</h3><p>Cada chargeback evitado e cada golpista barrado antes da liberação é dinheiro que fica na mesa.</p></div>
+        <div class="why"><div class="n">— 04</div><h3>Velocidade que o trader sente</h3><p>Resposta em segundos, aprovação mais rápida. Do lado do cliente, isso é experiência — e experiência retém.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMO CONECTA -->
+<section id="como">
+  <div class="wrap sec-pad" style="padding-top:0">
+    <div class="sec-head reveal">
+      <span class="tag">Arquitetura</span>
+      <h2>Soma inteligência <span class="i">sem mexer no sistema crítico.</span></h2>
+      <p class="sub">O Copiloto roda como uma camada separada, conectada por integração à sua plataforma de gestão de contas. Evolui rápido, sem risco pra operação.</p>
+    </div>
+    <div class="flow reveal">
+      <div class="node">
+        <div class="ni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></div>
+        <h4>Sua plataforma</h4><p>Gestão de contas, dados reais dos traders</p>
+      </div>
+      <div class="arr">→</div>
+      <div class="node mid">
+        <div class="ni"><span style="font-family:Fraunces,serif;font-weight:500;font-size:22px">V</span></div>
+        <h4>Verdik</h4><p>Lê, aplica as suas regras e devolve o veredito</p>
+      </div>
+      <div class="arr">→</div>
+      <div class="node">
+        <div class="ni"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
+        <h4>Sua equipe</h4><p>Decide com um clique, atende em segundos</p>
+      </div>
+    </div>
+    <div class="flow-note reveal">conexão por integração · sem migração · sem trocar de plataforma</div>
+  </div>
+</section>
+
+<!-- MÓDULOS -->
+<section>
+  <div class="wrap sec-pad" style="padding-top:0">
+    <div class="sec-head reveal">
+      <span class="tag">O que já está construído</span>
+      <h2>Não é conceito de slide. <span class="i">É um sistema em produção.</span></h2>
+      <p class="sub">No ar, usado em uma operação real no mercado brasileiro.</p>
+    </div>
+    <div class="mods reveal">
+      <div class="mod"><div class="top"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><h3>Atendimento com IA</h3></div><p>Lê relato e prints, investiga a conta e devolve diagnóstico + resposta + passos.</p></div>
+      <div class="mod"><div class="top"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><h3>Fila de aprovação</h3></div><p>Contas em análise, pré-check automático, veredito visual e filtros.</p></div>
+      <div class="mod"><div class="top"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><h3>Pré-check de regras</h3></div><p>Meta, drawdown, dias, perda diária e swing — separando o automático do humano.</p></div>
+      <div class="mod"><div class="top"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><h3>Detecção de anomalias</h3></div><p>Concentração de ganho, contas paradas e o mesmo trader em várias contas.</p></div>
+      <div class="mod"><div class="top"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><h3>Risco de operador</h3></div><p>Liga contas por CPF/telefone/pix (laranja), detecta copy-trading e dá score 0–100 explicável.</p></div>
+      <div class="mod"><div class="top"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span><h3>Aprovação com PIN</h3></div><p>Botão de aprovação real, dupla confirmação e PIN, integrado à plataforma.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="acesso">
+  <div class="wrap sec-pad" style="padding-top:0">
+    <div class="cta-band reveal">
+      <div class="cta-l">
+        <span class="tag">Próximos passos</span>
+        <h2>Quem chega primeiro atende melhor e perde menos para fraude.</h2>
+        <p class="q">"Toda prop firm vai precisar de uma camada de inteligência como esta. A pergunta não é se, é quando."</p>
+      </div>
+      <div class="cta-r">
+        <div class="form" id="accessForm">
+          <label for="f-nome">Nome</label><input id="f-nome" type="text" placeholder="Seu nome" autocomplete="name">
+          <label for="f-mesa">Mesa / empresa</label><input id="f-mesa" type="text" placeholder="Nome da sua mesa">
+          <label for="f-email">E-mail de trabalho</label><input id="f-email" type="email" placeholder="voce@suamesa.com" autocomplete="email">
+          <button class="gobtn" onclick="enviar()">Agendar demonstração ao vivo →</button>
+        </div>
+        <div class="thanks" id="thanks"><div class="big">Recebido.</div><p>Entramos em contato em breve para agendar sua demonstração.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <a href="#" class="brand"><span class="tile" style="width:27px;height:27px;font-size:19px">V</span><span class="wm" style="font-size:23px">VERDIK</span></a>
+      <div class="claim">Inteligência de risco para mesas proprietárias.</div>
+    </div>
+    <div class="foot-bot">
+      <span class="mono">Produto independente · suporte, aprovação e risco para prop firms</span>
+      <span class="mono">© 2026 Verdik · Confidencial</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const BRAND="Verdik";
+const $=s=>document.querySelector(s);
+const money=v=>"US$ "+v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}})},{threshold:.1});
+document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+const cio=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){const el=e.target,to=+el.dataset.to;let t0=null;const step=ts=>{if(!t0)t0=ts;const p=Math.min((ts-t0)/900,1);el.textContent=Math.round(p*to);if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);cio.unobserve(el);}})},{threshold:.6});
+document.querySelectorAll(".count").forEach(el=>cio.observe(el));
+
+const CONTAS=[
+  {id:"9220",trader:"Lucas P. da Fonseca",plat:2,plano:"50K · Futuros",saldo:53200,ganho:3200,meta:3000,piso:47500,dias:6,minDias:5,swing:false,consist:41.2},
+  {id:"8810",trader:"Marina Alves Costa",plat:1,plano:"25K · Ações",saldo:27100,ganho:2100,meta:1500,piso:24000,dias:3,minDias:5,swing:false,consist:52.0},
+  {id:"9305",trader:"Rafael Souza Lima",plat:1,plano:"100K · Futuros",saldo:104500,ganho:4500,meta:6000,piso:95000,dias:7,minDias:5,swing:true,consist:71.4},
+  {id:"9412",trader:"Bianca M. Ribeiro",plat:2,plano:"50K · Futuros",saldo:54100,ganho:4100,meta:3000,piso:48000,dias:8,minDias:5,swing:false,consist:38.1},
+];
+function preCheck(a){
+  const ba=a.plat===2,c=[];
+  c.push({nm:"Meta de lucro",auto:1,ok:a.ganho>=a.meta,dt:`${money(a.ganho)} / ${money(a.meta)} (${Math.round(a.ganho/a.meta*100)}%)`});
+  c.push({nm:"Dias operados",auto:1,ok:a.dias>=a.minDias,dt:`${a.dias} / mín ${a.minDias}`});
+  c.push({nm:"Acima do drawdown",auto:1,ok:a.saldo>=a.piso,dt:`folga ${money(a.saldo-a.piso)} · ${ba?"balanço ProphHub":"operações"}`});
+  if(ba)c.push({nm:"Perda diária",auto:1,ok:true,dt:"em tempo real · ProphHub/Nelogica"});
+  if(!ba)c.push({nm:"Sem swing trade",auto:1,ok:!a.swing,dt:a.swing?"swing detectado — reprova":"sem swing"});
+  else c.push({nm:"Swing trade",info:1,ok:true,dt:"não se aplica em Black Arrow"});
+  c.push({nm:"Consistência",human:1,ok:true,dt:`${a.consist.toFixed(1)}% — decisão humana`});
+  const auto=c.filter(x=>x.auto),ok=auto.every(x=>x.ok),motivos=auto.filter(x=>!x.ok).map(x=>x.nm);
+  const anom=[];
+  if(a.consist>70)anom.push(`${a.consist.toFixed(0)}% do lucro concentrado em poucos dias`);
+  if(a.ganho>=a.meta&&a.dias<=a.minDias+1)anom.push(`meta batida em ${a.dias} dias (mín ${a.minDias})`);
+  return{ok,c,motivos,anom,ba};
+}
+function renderQueue(){
+  const list=$("#queueList");list.innerHTML="";
+  CONTAS.forEach((a,i)=>{
+    const pc=preCheck(a),el=document.createElement("div");
+    el.className="acct";el.dataset.i=i;
+    el.innerHTML=`<div><div class="who">${a.trader}</div><div class="meta">#${a.id} · ${a.plano}<span class="plat">${a.ba?"BLACK ARROW":"MT5"}</span></div></div><div class="chip ${pc.ok?"ok":"rev"}">${pc.ok?"APROVAR":"REVISAR"}</div>`;
+    el.onclick=()=>select(i);list.appendChild(el);
+  });
+  $("#queueCount").textContent=CONTAS.length+" contas";
+}
+function select(i){
+  document.querySelectorAll(".acct").forEach(e=>e.classList.toggle("active",+e.dataset.i===i));
+  const a=CONTAS[i];$("#panelEmpty").style.display="none";
+  const b=$("#panelBody");b.style.display="block";
+  b.innerHTML=`<div class="scanning"><span>${BRAND} analisando #${a.id}…</span><div class="scanbar"><i></i></div></div>`;
+  setTimeout(()=>reveal(a),840);
+}
+function reveal(a){
+  const pc=preCheck(a);
+  const linhas=pc.c.map(c=>{
+    const mk=c.human?'<span class="mk h">○</span>':(c.info?'<span class="mk h">·</span>':(c.ok?'<span class="mk y">✓</span>':'<span class="mk n">✕</span>'));
+    return `<div class="check">${mk}<span class="nm">${c.nm}</span><span class="dt">${c.dt}</span></div>`;
+  }).join("");
+  const anom=pc.anom.length?`<div class="tagh">Anomalias a observar</div>${pc.anom.map(x=>`<div class="check"><span class="mk n">!</span><span class="dt">${x}</span></div>`).join("")}`:"";
+  $("#panelBody").innerHTML=`<div class="ph"><div><h3>${a.trader}</h3><div class="sub2">#${a.id} · ${a.plano} · ${pc.ba?"Black Arrow":"MT5"}</div></div></div>
+    <div class="verdict ${pc.ok?"ok":"rev"}"><div class="icon">${pc.ok?"✓":"!"}</div><div class="big">${pc.ok?"Pode aprovar":"Revisar"}</div></div>
+    <div class="tagh">${pc.ok?"Critérios automáticos OK":"Pendência: "+pc.motivos.join(", ")}</div>${linhas}${anom}
+    <div class="pa"><button class="sbtn go" onclick="aprovar('${a.id}')" ${pc.ok?"":"disabled style='opacity:.35;cursor:not-allowed'"}>Aprovar com PIN</button><button class="sbtn">Investigar</button></div>`;
+}
+function aprovar(id){alert(`(Demo) Conta #${id} — dupla confirmação + PIN.\n\nEm produção, a ${BRAND} dispara o contrato, o e-mail e a liberação na plataforma.`);}
+
+const CLIENTES=[
+ {nome:"Marina Alves",id:"8810",score:12,nivel:"Risco baixo",cor:"#4fc3d3",flags:[["ok","✓","Sem ocorrências em 8 meses"],["ok","✓","Saques sempre dentro do prazo"],["ok","✓","Nenhuma disputa ou estorno"]]},
+ {nome:"Rafael Souza",id:"9305",score:47,nivel:"Risco médio",cor:"#e6a85c",flags:[["warn","!","1 reembolso solicitado (concedido)"],["warn","!","Reclamações recorrentes no chat"],["ok","✓","Sem chargeback até agora"]]},
+ {nome:"Diego Martins",id:"7740",score:92,nivel:"Risco alto",cor:"#e8615a",fraude:true,flags:[["bad","✕","Chargeback aberto no cartão"],["bad","✕","Padrão compra-e-contesta"],["bad","✕","3 contas no mesmo CPF"]]},
+];
+function gauge(score,cor){
+  const len=251.3,fill=(score/100)*len;
+  return `<svg class="gauge" viewBox="0 0 200 128" width="100%">
+    <path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="rgba(236,230,217,.16)" stroke-width="13" stroke-linecap="round"/>
+    <path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="${cor}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${fill} ${len-fill}" style="transition:stroke-dasharray .9s cubic-bezier(.2,.7,.2,1)"/>
+    <text class="gnum" x="100" y="104" text-anchor="middle" fill="${cor}">${score}</text>
+    <text class="glab" x="100" y="121" text-anchor="middle">SCORE DE RISCO</text></svg>`;
+}
+function renderRisk(){
+  const list=$("#riskList");list.innerHTML="";
+  CLIENTES.forEach((c,i)=>{
+    const el=document.createElement("div");el.className="rclient";el.dataset.i=i;
+    el.innerHTML=`<div class="rdot" style="background:${c.cor}22;color:${c.cor};border:1px solid ${c.cor}55">${c.score}</div><div><div class="nm">${c.nome}</div><div class="id">#${c.id} · ${c.nivel.toLowerCase()}</div></div>`;
+    el.onclick=()=>riskSelect(i);list.appendChild(el);
+  });
+}
+function riskSelect(i){
+  document.querySelectorAll(".rclient").forEach(e=>e.classList.toggle("active",+e.dataset.i===i));
+  const c=CLIENTES[i];
+  const al=c.fraude?`<div class="galert"><div class="gi"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div><div><div class="gt">Cliente marcado — alerta no topo do atendimento</div><div class="gs">não decida nada antes de revisar o histórico</div></div></div>`:"";
+  const flags=c.flags.map(f=>`<div class="rflag"><span class="fi ${f[0]}">${f[1]}</span>${f[2]}</div>`).join("");
+  $("#riskPanel").innerHTML=`${al}<div class="rtop"><div>${gauge(c.score,c.cor)}</div><div class="rmeta"><div class="rname">${c.nome}</div><div class="rlevel" style="color:${c.cor}">${c.nivel}</div></div></div><div class="rflags">${flags}</div>`;
+}
+
+const TICKETS=[
+ {q:"Reprovei e não concordo — importei meu MT5",src:"relato + print colados",tags:[["rev","reprovação"],["","bug conhecido"]],diag:"Operações com data anterior ao início do teste — o motor avaliou trades fora da janela. Não é culpa do trader: é o bug de importação do MT5. Confiança alta.",acao:"escalar pro técnico",wpp:"Oi, Rafael! Identifiquei uma inconsistência nas datas de algumas operações importadas — elas caíram fora da janela do seu teste. Isso não é falha sua. Já encaminhei pro time técnico corrigir e te aviso assim que normalizar."},
+ {q:"Cadê meu saque? Já faz dias",src:"relato repassado",tags:[["go","status_conta"],["","resolver no chat"]],diag:"Conta aprovada (status 4), saque dentro da janela e do valor disponível. Fluxo normal de processamento — sem trava.",acao:"resolver no chat",wpp:"Oi, Marina! Seu saque está aprovado e dentro do prazo de processamento. Tá tudo certo, sem pendência da sua parte — qualquer atualização eu te aviso por aqui!"},
+ {q:"Minha conta sumiu da plataforma",src:"relato repassado",tags:[["rev","acesso"],["","bug conhecido"]],diag:"A conta existe e está ativa no backend, mas não aparece pro trader — padrão do bug de provisionamento. Não houve perda de conta.",acao:"escalar pro técnico",wpp:"Oi, Lucas! Sua conta está ativa e segura no nosso sistema — foi uma falha de exibição, já reportada pro time técnico. Nada foi perdido. Te atualizo assim que normalizar."},
+];
+function renderSup(){
+  const pick=$("#supPick");pick.innerHTML="";
+  TICKETS.forEach((t,i)=>{
+    const el=document.createElement("div");el.className="ticket";el.dataset.i=i;
+    el.innerHTML=`<div class="q">“${t.q}”</div><div class="src">${t.src}</div>`;
+    el.onclick=()=>supSelect(i);pick.appendChild(el);
+  });
+}
+function supSelect(i){
+  document.querySelectorAll(".ticket").forEach(e=>e.classList.toggle("active",+e.dataset.i===i));
+  const t=TICKETS[i];
+  $("#supOut").innerHTML=`<div class="scanning" style="height:200px"><span>${BRAND} investigando…</span><div class="scanbar"><i></i></div></div>`;
+  setTimeout(()=>{
+    const tags=t.tags.map(([c,l])=>`<span class="tg ${c}">${l}</span>`).join("")+`<span class="tg">${t.acao}</span>`;
+    $("#supOut").innerHTML=`<div class="diag"><div class="h">Diagnóstico pra atendente</div><p>${t.diag}</p></div><div class="tags">${tags}</div><div class="wpp"><div class="h">Resposta pronta pro trader</div><p>${t.wpp}</p></div>`;
+  },740);
+}
+/* ===== CONTATO DA VERDIK — PREENCHA AQUI (uma linha cada) =====
+   whatsapp: só dígitos, com DDI+DDD. Ex Brasil: "5511999999999". Vazio = desliga WhatsApp.
+   email:    ex "contato@verdik.com.br". Vazio = desliga e-mail.
+   Com pelo menos um preenchido, cada "Agendar demonstração" entrega o lead pra você. */
+const VERDIK_CONTATO = { whatsapp: "", email: "" };
+
+function enviar(){
+  const n = $("#f-nome").value.trim();
+  if(!n){ $("#f-nome").focus(); return; }
+  const mesa  = ($("#f-mesa")  && $("#f-mesa").value.trim())  || "—";
+  const email = ($("#f-email") && $("#f-email").value.trim()) || "—";
+  const texto =
+    "Olá! Quero agendar uma demonstração da Verdik.\n\n" +
+    "Nome: " + n + "\nMesa: " + mesa + "\nE-mail p/ contato: " + email;
+  try {
+    if (VERDIK_CONTATO.whatsapp) {
+      window.open("https://wa.me/" + VERDIK_CONTATO.whatsapp.replace(/\D/g,"") + "?text=" + encodeURIComponent(texto), "_blank");
+    } else if (VERDIK_CONTATO.email) {
+      window.location.href = "mailto:" + VERDIK_CONTATO.email +
+        "?subject=" + encodeURIComponent("Demonstração Verdik — " + n) +
+        "&body=" + encodeURIComponent(texto);
+    }
+  } catch(e){}
+  $("#accessForm").style.display="none";
+  $("#thanks").style.display="block";
+}
+
+renderQueue();select(0);
+renderRisk();riskSelect(2);
+renderSup();supSelect(0);
+</script>
+</body>
+</html>
